@@ -61,4 +61,43 @@ def answer(state):
     history = []
     
     for msg in state.get('history',[])[-8]:
-        history.append(HumanMessage)
+        history.append(HumanMessage(content = msg['content']) if msg['role']=='user' else AIMessage(content=msg['content']))
+    
+    user = f"Question : {state['question']}\n Visula obersvations (not diagnosis) : {state.get('image_description','None')}\n Historical Pdf excerpts: \n {context or 'No relevant PDF excerpts'}\n External results :\n{websites or 'No relevant external results'}\n\n"
+    
+    llm = ChatGoogleGenerativeAI(
+        model='settings.google_chat_model', temperature=0.1,
+        api_key = settings.google_api_key, 
+        timeout = 45 ,
+        max_retries =1
+        )
+    
+    response = llm.invoke([SystemMessage(content=SYSTEM)] , *history , [HumanMessage(content=user)])
+    
+    return {'answer': response.content}
+
+builder = StateGraph(State)
+
+builder.add_node('retriever', retriever)
+builder.add_node('route', route)
+builder.add_node('web', web_search)
+builder.add_node('answer', answer)
+
+builder.set_entry_point('retriever')
+builder.add_edge('retriever', 'route')
+builder.add_conditional_edges(
+    'route',
+    {
+        'web': 'web',
+        'answer': 'answer'
+    }
+    )
+builder.add_edge('web', 'answer')    
+builder.add_edge('answer', END) 
+
+conn = sqlite3.connect("medical_memory.db", check_same_thread=False)
+
+memory = SqliteSaver(conn)
+
+graph = builder.compile(checkpointer = memory)
+    
