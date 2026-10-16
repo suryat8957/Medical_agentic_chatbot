@@ -36,9 +36,15 @@ class ChatRequest(BaseModel):
 
 
 def auth(authorization: str | None):
-    if settings.api_token and not secrets.compare_digest(
-        authorization or '', f'Bearer {settings.api_token}'
-    ):
+    if not settings.api_token:
+        return
+
+    token = (authorization or '').strip()
+    bearer_token = 'Bearer ' + settings.api_token
+    valid = secrets.compare_digest(token, settings.api_token) or secrets.compare_digest(
+        token, bearer_token
+    )
+    if not valid:
         raise HTTPException(status_code=401, detail='Invalid API token')
 
 

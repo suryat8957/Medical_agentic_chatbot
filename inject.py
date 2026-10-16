@@ -21,7 +21,7 @@ def chunks(text, size=1100, overlap=100):
 def main():
     """Read a PDF, create embeddings, and add them to the index."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pdf', default='data/medical_book.pdf')
+    parser.add_argument('--pdf', default='data/Medical_book.pdf')
     args = parser.parse_args()
 
     pdf = Path(args.pdf)
