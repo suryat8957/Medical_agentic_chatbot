@@ -8,7 +8,8 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
-from openai import OpenAI
+from langchain_core.messages import HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 
 from app.agent import graph
@@ -41,7 +42,7 @@ def auth(authorization: str | None):
         raise HTTPException(status_code=401, detail='Invalid API token')
 
 
-def inspect_image(data):
+def inspect_image(data: str | None) -> str:
     if not data:
         return ''
     try:
@@ -52,28 +53,32 @@ def inspect_image(data):
             raise ValueError('Only JPEG/PNG/WebP under 5MB supported')
     except (ValueError, IndexError) as exc:
         raise HTTPException(status_code=400, detail=f'Invalid image: {exc}')
-    client = OpenAI(api_key=settings.openai_api_key, timeout=45)
-    result = client.chat.completions.create(
-        model=settings.openai_vision_model,
-        messages=[
-            {
-                'role': 'user',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': (
-                            'Describe only objectively visible medical-relevant features. '
-                            'Do not diagnose, estimate severity, or assert absence of illness. '
-                            'If image unclear, say so.'
-                        ),
-                    },
-                    {'type': 'image_url', 'image_url': {'url': data}},
-                ],
-            }
-        ],
-        max_tokens=300,
-    )
-    return result.choices[0].message.content or ''
+
+    if not settings.gemini_api_key:
+        return ''
+
+    try:
+        client = ChatGoogleGenerativeAI(
+            model=settings.gemini_vision_model,
+            google_api_key=settings.gemini_api_key,
+            temperature=0.1,
+        )
+        prompt = (
+            'Describe only objectively visible medical-relevant features. '
+            'Do not diagnose, estimate severity, or assert absence of illness. '
+            'If image unclear, say so.'
+        )
+        msg = HumanMessage(
+            content=[
+                {'type': 'text', 'text': prompt},
+                {'type': 'image_url', 'image_url': data},
+            ]
+        )
+        result = client.invoke([msg])
+        return result.content or ''
+    except Exception as exc:
+        print(f'Vision observation error: {exc}', flush=True)
+        return ''
 
 
 @app.get('/', response_class=HTMLResponse)
@@ -85,8 +90,10 @@ def home():
 def health():
     return {
         'status': 'ok',
-        'configured': bool(settings.openai_api_key and settings.pinecone_api_key),
+        'configured': bool(settings.gemini_api_key and settings.pinecone_api_key),
         'tavily': bool(settings.tavily_api_key),
+        'llm': settings.gemini_chat_model,
+        'embedding_provider': settings.embedding_provider,
     }
 
 
@@ -98,9 +105,9 @@ def chat(
 ):
     auth(authorization)
 
-    if not settings.openai_api_key or not settings.pinecone_api_key:
+    if not settings.gemini_api_key or not settings.pinecone_api_key:
         raise HTTPException(
-            503, 'Set OPENAI_API_KEY and PINECONE_API_KEY in .env'
+            503, 'Set GEMINI_API_KEY and PINECONE_API_KEY in .env'
         )
 
     history = [
@@ -173,15 +180,20 @@ async def transcribe(
     data = await file.read(10_000_001)
     if len(data) > 10_000_000:
         raise HTTPException(413, 'Audio exceeds 10 MB')
-    audio = io.BytesIO(data)
-    audio.name = 'voice.webm'
     try:
-        result = OpenAI(api_key=settings.openai_api_key).audio.transcriptions.create(
-            model='whisper-1', file=audio
-        )
-        return {'text': result.text}
+        import speech_recognition as sr
+
+        r = sr.Recognizer()
+        audio_file = io.BytesIO(data)
+        with sr.AudioFile(audio_file) as source:
+            audio_data = r.record(source)
+            text = r.recognize_google(audio_data)
+            return {'text': text}
     except Exception:
-        raise HTTPException(502, 'Speech transcription unavailable')
+        raise HTTPException(
+            501,
+            'Speech transcription unavailable on backend. Browser Web Speech Recognition is used instead.',
+        )
 
 
 @app.post('/api/speak')
@@ -194,9 +206,15 @@ def speak(
     if not text:
         raise HTTPException(400, 'Missing text')
     try:
-        speech = OpenAI(api_key=settings.openai_api_key).audio.speech.create(
-            model='tts-1', voice='alloy', input=text
-        )
-        return Response(content=speech.content, media_type='audio/mpeg')
+        from gtts import gTTS
+
+        tts = gTTS(text=text, lang='en')
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return Response(content=fp.read(), media_type='audio/mpeg')
     except Exception:
-        raise HTTPException(502, 'Speech synthesis unavailable')
+        raise HTTPException(
+            501,
+            'Backend TTS unavailable. Browser Speech Synthesis is used instead.',
+        )

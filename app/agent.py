@@ -1,10 +1,10 @@
 import sqlite3
 from typing import TypedDict
 
-from langgraph.graph import StateGraph, END
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.sqlite import SqliteSaver
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langgraph.graph import END, StateGraph
 from tavily import TavilyClient
 
 from app.config import settings
@@ -94,12 +94,10 @@ def answer(state):
         f"Historical PDF excerpts:\n{context or 'No relevant PDF excerpts'}\n"
         f"External results:\n{websites or 'No external results'}"
     )
-    llm = ChatOpenAI(
-        model=settings.openai_chat_model,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_chat_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.1,
-        api_key=settings.openai_api_key,
-        timeout=45,
-        max_retries=1,
     )
     response = llm.invoke(
         [SystemMessage(content=SYSTEM), *history, HumanMessage(content=user)]

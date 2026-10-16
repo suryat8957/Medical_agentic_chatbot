@@ -15,23 +15,22 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    # OpenAI
-    openai_api_key: str = ""
-    openai_chat_model: str = "gpt-4.1-mini"
-    openai_embed_model: str = "text-embedding-3-small"
-    openai_vision_model: str = "gpt-4.1-mini"
-
-    # Google Gemini
+    # Google Gemini (Free tier available via Google AI Studio)
     gemini_api_key: str = ""
-    gemini_chat_model: str = "gemini-2.5-flash"
-    gemini_vision_model: str = "gemini-2.5-flash"
-    gemini_embed_model: str = "gemini-embedding-001"
+    gemini_chat_model: str = "gemini-3.5-flash-lite"
+    gemini_vision_model: str = "gemini-3.5-flash-lite"
+    gemini_embed_model: str = "models/text-embedding-004"
+
+    # Embedding Configuration: "huggingface" (free local) or "gemini" (free API)
+    embedding_provider: str = "huggingface"
+    huggingface_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # Pinecone
     pinecone_api_key: str = ""
     pinecone_index: str = "medical-agent-demo"
+    pinecone_dimension: int = 384  # 384 for all-MiniLM-L6-v2, 768 for text-embedding-004
 
-    # Tavily
+    # Tavily Web Search
     tavily_api_key: str = ""
 
     # API security

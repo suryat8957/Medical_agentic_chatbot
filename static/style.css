@@ -64,28 +64,166 @@ header p {
 
 .bot,
 .user {
-  padding: 14px 17px;
+  padding: 14px 18px;
   border-radius: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
   max-width: 88%;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-.bot {
-  align-self: flex-start;
-  background: #f0f5f7;
 }
 
 .user {
   align-self: flex-end;
   background: #d6f1ee;
+  color: #0b343d;
+  white-space: pre-wrap;
+  font-weight: 500;
+}
+
+.bot {
+  align-self: flex-start;
+  background: #f8fafc;
+  color: #172d38;
+  border: 1px solid #e1ebf0;
+  white-space: normal;
+  box-shadow: 0 2px 8px #133a4c0a;
+}
+
+.bot > *:first-child {
+  margin-top: 0;
+}
+
+.bot > *:last-child {
+  margin-bottom: 0;
+}
+
+.bot h1,
+.bot h2,
+.bot h3,
+.bot h4 {
+  margin: 16px 0 8px;
+  color: #094e5c;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.bot h1 { font-size: 20px; border-bottom: 1px solid #e1ebf0; padding-bottom: 6px; }
+.bot h2 { font-size: 17px; }
+.bot h3 { font-size: 15px; }
+
+.bot p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+
+.bot strong {
+  color: #072a33;
+  font-weight: 600;
+}
+
+.bot em {
+  font-style: italic;
+}
+
+.bot ul,
+.bot ol {
+  margin: 8px 0 12px 22px;
+  padding: 0;
+}
+
+.bot li {
+  margin-bottom: 6px;
+  line-height: 1.55;
+}
+
+.bot hr,
+.bot .bot-divider {
+  border: 0;
+  height: 1px;
+  background: #d8e6ec;
+  margin: 14px 0;
+}
+
+.bot .disclaimer-callout,
+.bot blockquote {
+  background: #fff8eb;
+  border-left: 4px solid #e2951e;
+  color: #784805;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 10px 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bot .disclaimer-callout p,
+.bot blockquote p {
+  margin: 0;
+}
+
+.cite-badge {
+  display: inline-block;
+  background: #e4f4f7;
+  color: #085a69;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 99px;
+  border: 1px solid #badfe6;
+  margin: 0 2px;
+  vertical-align: baseline;
 }
 
 .sources {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #cfdfe6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.sources-title {
   font-size: 12px;
-  color: #3c6271;
-  margin-top: 10px;
+  font-weight: 600;
+  color: #4b6b7a;
+  margin-right: 2px;
+}
+
+.source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #edf5f8;
+  color: #1b4b5e;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid #d4e4eb;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.source-chip:hover {
+  background: #e0eef3;
+  border-color: #b8d4e0;
+}
+
+.source-chip.pdf {
+  background: #fdf3f2;
+  color: #9c271d;
+  border-color: #f7d4d1;
+}
+
+.source-chip.web {
+  background: #f0f7ff;
+  color: #1356a3;
+  border-color: #cbe0fa;
+}
+
+.chip-icon {
+  font-size: 11px;
 }
 
 form {
