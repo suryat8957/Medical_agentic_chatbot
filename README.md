@@ -10,6 +10,10 @@
 
 > **MedGuide AI** is an advanced, multimodal educational medical agent built with **LangGraph**, **FastAPI**, **Pinecone Vector Database**, and **Google Gemini**. It runs with **zero paid OpenAI dependencies**, leveraging **Google Gemini 3.5 Flash Lite (free tier via Google AI Studio)** for intelligent chat and vision reasoning, **free local HuggingFace embeddings (`all-MiniLM-L6-v2`)**, automated routing to **Tavily Web Search** for real-time clinical guidelines, browser-native speech input/output, and persistent SQLite memory.
 
+## 📝 Project Description
+
+MedGuide AI is a retrieval-augmented medical education chatbot that combines a local PDF knowledge base (`data/Medical_book.pdf`) with live web results when confidence is low or current guidance is requested. The backend exposes a FastAPI API (`/api/chat`) backed by a LangGraph workflow (`retrieve → route → [web] → answer`) and persists conversation checkpoints in `medical_memory.db`. The frontend supports text, optional image observation, microphone input, and browser speech output for an end-to-end educational assistant experience.
+
 ---
 
 ## 📸 System Architecture
@@ -77,6 +81,7 @@ Medical_agentic_chatbot/
 │   └── Medical_book.pdf      # Reference medical literature (Gale Encyclopedia)
 │
 ├── docs/
+│   ├── DEVELOPER_GUIDE.md    # Developer-focused runbook aligned with current scripts
 │   └── Medical AI Agent Architecture Infographic.png # System diagram
 │
 ├── static/
@@ -117,7 +122,7 @@ This guide is tailored specifically for **Windows 10 / Windows 11** using **Powe
 Open **PowerShell** or **Command Prompt** and run:
 
 ```powershell
-git clone https://github.com/your-username/Medical_agentic_chatbot.git
+git clone https://github.com/suryat8957/Medical_agentic_chatbot.git
 cd Medical_agentic_chatbot
 ```
 
@@ -195,6 +200,8 @@ API_TOKEN=
 ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
 ```
 
+If `API_TOKEN` is set, send it in the `Authorization` header (plain token or bearer-prefixed token) when calling protected API routes.
+
 > [!TIP]
 > **Windows SSL Workaround**: `app/config.py` automatically injects `certifi.where()` into `SSL_CERT_FILE` to prevent SSL verification errors commonly encountered in Conda and Windows corporate environments.
 
@@ -236,9 +243,11 @@ Open your browser and navigate to:
 |---|---|---|---|
 | `GET` | `/` | Serves the web interface (`index.html`) | None |
 | `GET` | `/api/health` | Verifies Gemini, Pinecone, and Tavily status | None |
-| `POST` | `/api/chat` | Main agentic chat interaction | `{"message": str, "history": list, "image_data": str \| null}` |
-| `POST` | `/api/transcribe` | Free audio transcription fallback | `multipart/form-data` (`file`: audio/webm) |
-| `POST` | `/api/speak` | Free TTS audio fallback | `{"text": str}` |
+| `POST` | `/api/chat` | Main agentic chat interaction | Body: `{"message": str, "history": list, "image_data": str \| null}`. Optional headers: `Authorization`, `X-Conversation-ID` |
+| `POST` | `/api/transcribe` | Free audio transcription fallback | `multipart/form-data` (`file`: audio/webm). Optional header: `Authorization` |
+| `POST` | `/api/speak` | Free TTS audio fallback | Body: `{"text": str}`. Optional header: `Authorization` |
+
+`X-Conversation-ID` lets you continue the same LangGraph checkpoint thread across requests.
 
 ---
 
