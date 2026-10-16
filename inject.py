@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 
 import fitz
+
 from app.knowledge import embed, ensure_index
 
 
@@ -10,7 +11,11 @@ def chunks(text, size=1100, overlap=100):
     """Split text into chunks of a given size with overlap."""
     text = ' '.join(text.split())
     step = size - overlap
-    return [text[i:i+size] for i in range(0, len(text), step) if len(text[i:i+size]) > 80]
+    return [
+        text[i : i + size]
+        for i in range(0, len(text), step)
+        if len(text[i : i + size]) > 80
+    ]
 
 
 def main():
@@ -34,11 +39,15 @@ def main():
                 ).hexdigest()
 
                 batch.append(
-                    (key, content, {
-                        'page': page_number,
-                        'text': content,
-                        'file': pdf.name,
-                    })
+                    (
+                        key,
+                        content,
+                        {
+                            'page': page_number,
+                            'text': content,
+                            'file': pdf.name,
+                        },
+                    )
                 )
 
                 # Upload embeddings in batches to limit memory usage.
@@ -53,7 +62,7 @@ def main():
                     batch = []
 
                 if page_number % 50 == 0:
-                    print(f'Indexed pages: {page_number}/{len(doc)}',flush=True)
+                    print(f'Indexed pages: {page_number}/{len(doc)}', flush=True)
 
         # Upload any chunks left after the final full batch.
         if batch:

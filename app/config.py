@@ -1,4 +1,5 @@
 import os
+
 import certifi
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,9 +36,7 @@ class Settings(BaseSettings):
 
     # API security
     api_token: str = ""
-    allowed_origins: str = (
-        "http://localhost:8000,http://127.0.0.1:8000"
-    )
+    allowed_origins: str = "http://localhost:8000,http://127.0.0.1:8000"
 
     model_config = SettingsConfigDict(
         env_file=".env",
